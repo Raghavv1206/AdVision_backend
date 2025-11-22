@@ -185,16 +185,17 @@ SIMPLE_JWT = {
 # ============================================================================
 SITE_ID = 1
 
-# Disable username completely
+# CRITICAL: Explicitly disable the deprecated setting
+ACCOUNT_AUTHENTICATION_METHOD = None  # THIS LINE IS CRITICAL!
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
 
-# Modern login method (replaces deprecated ACCOUNT_AUTHENTICATION_METHOD)
+# Use ONLY the modern setting
 ACCOUNT_LOGIN_METHODS = {'email'}
-
-# Email verification
+ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-# Modern signup fields (replaces ACCOUNT_EMAIL_REQUIRED and ACCOUNT_USERNAME_REQUIRED)
+# Modern signup fields
 ACCOUNT_SIGNUP_FIELDS = ['email*']
 
 # Custom adapters

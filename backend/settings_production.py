@@ -8,16 +8,12 @@ from .settings import *
 # ============================================================================
 # CRITICAL: Override ALLAUTH settings (Must come right after import)
 # ============================================================================
+ACCOUNT_AUTHENTICATION_METHOD = None  # THIS IS THE KEY!
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
-
-# FIXED: Remove old deprecated setting, only use modern one
-ACCOUNT_LOGIN_METHODS = {'email'}  # Modern way (already correct)
+ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only email, no username
-
-# Remove this line if it exists anywhere:
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'  # <- DELETE THIS
+ACCOUNT_SIGNUP_FIELDS = ['email*']
 
 # Make sure REST_AUTH uses the custom serializer
 REST_AUTH = {
