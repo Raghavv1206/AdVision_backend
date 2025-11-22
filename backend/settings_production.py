@@ -68,11 +68,17 @@ os.makedirs(STATIC_ROOT, exist_ok=True)
 # ============================================================================
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://advision-frontend.vercel.app')
 
-CORS_ALLOWED_ORIGINS = list(set([
-    FRONTEND_URL,
-    "https://advision-frontend.vercel.app",
-    "https://advision.vercel.app",
-]))
+# Filter out empty strings and ensure all URLs have schemes
+CORS_ALLOWED_ORIGINS = [
+    url for url in [
+        FRONTEND_URL,
+        "https://advision-frontend.vercel.app",
+        "https://advision.vercel.app",
+    ] if url and url.startswith('http')  # Only valid URLs with http/https
+]
+
+# Remove duplicates
+CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS))
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -88,12 +94,18 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-CSRF_TRUSTED_ORIGINS = list(set([
-    FRONTEND_URL,
-    "https://advision-frontend.vercel.app",
-    "https://advision.vercel.app",
-    "https://advision-backend.onrender.com",
-]))
+# Filter out empty strings and ensure all URLs have schemes
+CSRF_TRUSTED_ORIGINS = [
+    url for url in [
+        FRONTEND_URL,
+        "https://advision-frontend.vercel.app",
+        "https://advision.vercel.app",
+        "https://advision-backend.onrender.com",
+    ] if url and url.startswith('http')  # Only valid URLs with http/https
+]
+
+# Remove duplicates
+CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
 
 # ============================================================================
 # GOOGLE OAUTH SETTINGS
