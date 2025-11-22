@@ -66,19 +66,20 @@ os.makedirs(STATIC_ROOT, exist_ok=True)
 # ============================================================================
 # CORS
 # ============================================================================
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://advision-frontend.vercel.app')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://ad-vision-frontend.vercel.app/')
 
-# Filter out empty strings and ensure all URLs have schemes
-CORS_ALLOWED_ORIGINS = [
-    url for url in [
-        FRONTEND_URL,
-        "https://advision-frontend.vercel.app",
-        "https://advision.vercel.app",
-    ] if url and url.startswith('http')  # Only valid URLs with http/https
-]
+# Remove trailing slashes and filter valid URLs
+def clean_url(url):
+    """Remove trailing slash and ensure valid URL"""
+    if url and url.startswith('http'):
+        return url.rstrip('/')
+    return None
 
-# Remove duplicates
-CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS))
+CORS_ALLOWED_ORIGINS = list(set(filter(None, [
+    clean_url(FRONTEND_URL),
+    clean_url("https://advision-frontend.vercel.app"),
+    clean_url("https://advision.vercel.app"),
+])))
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -94,18 +95,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Filter out empty strings and ensure all URLs have schemes
-CSRF_TRUSTED_ORIGINS = [
-    url for url in [
-        FRONTEND_URL,
-        "https://advision-frontend.vercel.app",
-        "https://advision.vercel.app",
-        "https://advision-backend.onrender.com",
-    ] if url and url.startswith('http')  # Only valid URLs with http/https
-]
-
-# Remove duplicates
-CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
+CSRF_TRUSTED_ORIGINS = list(set(filter(None, [
+    clean_url(FRONTEND_URL),
+    clean_url("https://ad-vision-frontend.vercel.app/"),
+    clean_url("https://ad-vision-frontend-git-main-raghavs-projects-e83ddc80.vercel.app/"),
+    clean_url("https://ad-vision-frontend-mkvkyh6xx-raghavs-projects-e83ddc80.vercel.app/"),
+])))
 
 # ============================================================================
 # GOOGLE OAUTH SETTINGS
