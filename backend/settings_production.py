@@ -64,24 +64,34 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 os.makedirs(STATIC_ROOT, exist_ok=True)
 
 # ============================================================================
-# CORS
+# CORS - FIXED
 # ============================================================================
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://ad-vision-frontend.vercel.app/')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://ad-vision-frontend.vercel.app')
 
-# Remove trailing slashes and filter valid URLs
 def clean_url(url):
     """Remove trailing slash and ensure valid URL"""
     if url and url.startswith('http'):
         return url.rstrip('/')
     return None
 
-CORS_ALLOWED_ORIGINS = list(set(filter(None, [
-    clean_url(FRONTEND_URL),
-    clean_url("https://advision-frontend.vercel.app"),
-    clean_url("https://advision.vercel.app"),
-])))
+# Clean all URLs - NO TRAILING SLASHES
+CORS_ALLOWED_ORIGINS = [
+    'https://advision-frontend.vercel.app',
+    'https://ad-vision-frontend.vercel.app',
+    'https://ad-vision-frontend-git-main-raghavs-projects-e83ddc80.vercel.app',
+]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -95,13 +105,11 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-CSRF_TRUSTED_ORIGINS = list(set(filter(None, [
-    clean_url(FRONTEND_URL),
-    clean_url("https://ad-vision-frontend.vercel.app/"),
-    clean_url("https://ad-vision-frontend-git-main-raghavs-projects-e83ddc80.vercel.app/"),
-    clean_url("https://ad-vision-frontend-mkvkyh6xx-raghavs-projects-e83ddc80.vercel.app/"),
-])))
-
+# CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://ad-vision-frontend.vercel.app',
+    'https://ad-vision-frontend.vercel.app',
+]
 # ============================================================================
 # GOOGLE OAUTH SETTINGS
 # ============================================================================
