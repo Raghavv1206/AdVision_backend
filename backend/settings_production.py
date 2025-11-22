@@ -10,9 +10,14 @@ from .settings import *
 # ============================================================================
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_LOGIN_METHODS = {'email'}  # Modern way instead of AUTHENTICATION_METHOD
+
+# FIXED: Remove old deprecated setting, only use modern one
+ACCOUNT_LOGIN_METHODS = {'email'}  # Modern way (already correct)
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only email, no username
+
+# Remove this line if it exists anywhere:
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'  # <- DELETE THIS
 
 # Make sure REST_AUTH uses the custom serializer
 REST_AUTH = {
