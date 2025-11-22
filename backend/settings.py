@@ -181,16 +181,18 @@ SIMPLE_JWT = {
 }
 
 # ============================================================================
-# ALLAUTH CONFIGURATION - CLEAN (No Deprecation Warnings)
+# ALLAUTH CONFIGURATION - FIXED FOR DJANGO-ALLAUTH 64.2.1
 # ============================================================================
 SITE_ID = 1
 
-# CRITICAL: Explicitly disable the deprecated setting
-ACCOUNT_AUTHENTICATION_METHOD = None  # THIS LINE IS CRITICAL!
+# CRITICAL: Do NOT define ACCOUNT_AUTHENTICATION_METHOD at all!
+# It's deprecated and conflicts with ACCOUNT_LOGIN_METHODS
+
+# Disable username completely
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
 
-# Use ONLY the modern setting
+# Use ONLY the modern setting (replaces deprecated ACCOUNT_AUTHENTICATION_METHOD)
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'

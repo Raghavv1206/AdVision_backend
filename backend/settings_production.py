@@ -6,23 +6,10 @@ import dj_database_url
 from .settings import *
 
 # ============================================================================
-# CRITICAL: Override ALLAUTH settings (Must come right after import)
+# PRODUCTION SETTINGS ONLY - DO NOT REDEFINE ALLAUTH SETTINGS
 # ============================================================================
-ACCOUNT_AUTHENTICATION_METHOD = None  # THIS IS THE KEY!
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_SIGNUP_FIELDS = ['email*']
-
-# Make sure REST_AUTH uses the custom serializer
-REST_AUTH = {
-    'REGISTER_SERIALIZER': 'core.serializers.CustomRegisterSerializer',
-    'USE_JWT': True,
-    'JWT_AUTH_HTTPONLY': False,
-    'SESSION_LOGIN': False,
-    'LOGIN_SERIALIZER': 'dj_rest_auth.serializers.LoginSerializer',
-}
+# ALLAUTH settings are already correctly defined in settings.py
+# We don't override them here to avoid conflicts
 
 # ============================================================================
 # PRODUCTION SECURITY
@@ -31,6 +18,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'advision-backend.onrender.com',
+    'https://advision-backend-8u95.onrender.com',
+    'advision-backend-8u95.onrender.com',
     '.onrender.com',
     'localhost',
     '127.0.0.1',
