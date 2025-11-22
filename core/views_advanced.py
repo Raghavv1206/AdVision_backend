@@ -2,6 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from core.utils.timezone_utils import now
 from .models import (
     AdPlatformConnection, SyncedCampaign, ABTest, ABTestVariation, Campaign
 )
@@ -46,7 +47,7 @@ class ConnectGoogleAdsView(APIView):
             
             connection.status = 'connected'
             connection.account_name = f"Google Ads Account {account_id}"
-            connection.last_sync = datetime.now()
+            connection.last_sync = now()
             connection.save()
             
             return Response({
@@ -94,7 +95,7 @@ class ConnectFacebookAdsView(APIView):
             
             connection.status = 'connected'
             connection.account_name = f"Facebook Ad Account {account_id}"
-            connection.last_sync = datetime.now()
+            connection.last_sync = now()
             connection.save()
             
             return Response({
@@ -226,7 +227,7 @@ class StartABTestView(APIView):
                 )
             
             ab_test.status = 'running'
-            ab_test.start_date = datetime.now()
+            ab_test.start_date = now()
             ab_test.save()
             
             return Response({

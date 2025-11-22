@@ -4,6 +4,7 @@ from decimal import Decimal
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from core.models import Campaign, DailyAnalytics, PredictiveModel, Prediction
+from core.utils.timezone_utils import now
 
 class PredictiveAnalyticsService:
     """Service for ML-based predictions"""
@@ -53,7 +54,7 @@ class PredictiveAnalyticsService:
             model_type='performance',
             defaults={
                 'accuracy': accuracy,
-                'last_trained': datetime.now(),
+                'last_trained': now(),
                 'training_samples': len(analytics),
                 'model_data': {
                     'coefficients': model.coef_.tolist(),

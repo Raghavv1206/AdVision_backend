@@ -11,7 +11,8 @@ import base64
 import uuid
 import io
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
+from core.utils.timezone_utils import now, today, days_ago, start_of_day, end_of_day
 import json
 from .models import Campaign, AdContent, ImageAsset, Comment, User, DailyAnalytics, CampaignAnalyticsSummary
 from .serializers import (
@@ -113,14 +114,14 @@ class DashboardStatsView(APIView):
         )['total'] or 0
         
         # Active campaigns
-        today = datetime.now().date()
+        today = today()
         active_campaigns = campaigns.filter(
             is_active=True,
             end_date__gte=today
         ).count()
         
         # This week stats
-        week_ago = today - timedelta(days=7)
+        week_ago = days_ago(7)
         ads_this_week = AdContent.objects.filter(
             campaign__user=user,
             created_at__gte=week_ago
@@ -197,7 +198,7 @@ class AnalyticsSummaryView(APIView):
         
         # Calculate days since campaign started
         start_date = campaign.start_date
-        today = datetime.now().date()
+        today = today()
         days_active = (today - start_date).days + 1
         
         # Generate realistic data based on actual campaign data
@@ -333,8 +334,8 @@ class AudienceInsightsView(APIView):
             platform = platform_counts[0]['platform'] if platform_counts else 'instagram'
             
             # Aggregate trend
-            week_ago = datetime.now().date() - timedelta(days=7)
-            two_weeks_ago = week_ago - timedelta(days=7)
+            week_ago = days_ago(7)
+            two_weeks_ago = days_ago(14)
             
             recent = DailyAnalytics.objects.filter(
                 campaign__user=user,
@@ -646,9 +647,9 @@ class WeeklyReportView(APIView):
     
     def get(self, request):
         user = request.user
-        today = datetime.now().date()
-        week_ago = today - timedelta(days=7)
-        two_weeks_ago = week_ago - timedelta(days=7)
+        today = today()
+        week_ago = days_ago(7)
+        two_weeks_ago = days_ago(14)
         
         # REAL DATA: Count actual resources created this week
         campaigns_created = Campaign.objects.filter(
@@ -1762,7 +1763,7 @@ class AnalyticsSummaryView(APIView):
     
     def get(self, request):
         campaign_id = request.query_params.get('campaign_id')
-        days = int(request.query_params.get('days', 30))  # Default 30 days
+        days = int(request.query_params.get('days', 30))
         
         if not campaign_id:
             return Response(
@@ -1787,8 +1788,8 @@ class AnalyticsSummaryView(APIView):
             summary.update_metrics()
         
         # Get date range for daily data
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=days-1)
+        end_date = today()  # Use function
+        start_date = days_ago(days - 1)  # Use helper function
         
         # Get daily analytics
         daily_data = DailyAnalytics.objects.filter(
@@ -1818,9 +1819,9 @@ class AnalyticsSummaryView(APIView):
         image_count = campaign.images.count()
         
         # Calculate days active
-        days_active = (datetime.now().date() - campaign.start_date).days + 1
+        days_active = (today() - campaign.start_date).days + 1
         
-        # Calculate cost per conversion - FIXED TYPE CONVERSION
+        # Calculate cost per conversion
         cost_per_conversion = 0
         if summary.total_conversions > 0 and summary.total_spend > 0:
             cost_per_conversion = float(summary.total_spend) / summary.total_conversions
@@ -1841,7 +1842,7 @@ class AnalyticsSummaryView(APIView):
             'spend': spend,
             'ctr': ctr_data,
             
-            # Summary metrics - ALL PROPERLY CONVERTED TO FLOAT
+            # Summary metrics
             'total_impressions': int(summary.total_impressions),
             'total_clicks': summary.total_clicks,
             'total_conversions': summary.total_conversions,
@@ -1863,34 +1864,42 @@ class DashboardStatsView(APIView):
     def get(self, request):
         user = request.user
         
-        # Basic counts - FIXED VARIABLE REFERENCE
-        total_campaigns = Campaign.objects.filter(user=user).count()
+        # BEFORE (causes UnboundLocalError):
+        # total_campaigns = campaigns.count()  # 'campaigns' used before defined
+        # today = datetime.now().date()        # 'today' variable shadows function
+        
+        # AFTER (fixed):
+        campaigns = Campaign.objects.filter(user=user)  # Define first
+        total_campaigns = campaigns.count()
         total_ads = AdContent.objects.filter(campaign__user=user).count()
         total_images = ImageAsset.objects.filter(campaign__user=user).count()
         
+        # Use 'today_date' instead of 'today' to avoid shadowing
+        today_date = today()  # Function call
+        
         # Budget
-        total_budget = Campaign.objects.filter(user=user).aggregate(
+        total_budget = campaigns.aggregate(
             total=Sum('budget')
         )['total'] or 0
         
         # Active campaigns
-        today = datetime.now().date()
-        active_campaigns = Campaign.objects.filter(
-            user=user,
+        active_campaigns = campaigns.filter(
             is_active=True,
-            end_date__gte=today
+            end_date__gte=today_date  # Use today_date variable
         ).count()
         
-        # This week stats
-        week_ago = today - timedelta(days=7)
+        # This week stats - use days_ago() instead
+        week_ago = days_ago(7)
+        week_ago_datetime = start_of_day(week_ago)  # Convert to datetime for filtering
+        
         ads_this_week = AdContent.objects.filter(
             campaign__user=user,
-            created_at__gte=week_ago
+            created_at__gte=week_ago_datetime  # Use timezone-aware datetime
         ).count()
         
         images_this_week = ImageAsset.objects.filter(
             campaign__user=user,
-            created_at__gte=week_ago
+            created_at__gte=week_ago_datetime
         ).count()
         
         # Platform distribution
@@ -2064,34 +2073,36 @@ class WeeklyReportView(APIView):
     
     def get(self, request):
         user = request.user
-        week_ago = datetime.now().date() - timedelta(days=7)
+        today_date = today()  # Use 'today_date' variable name
+        week_ago = days_ago(7)
         
         # REAL DATA: Count actual resources created
         campaigns_created = Campaign.objects.filter(
             user=user,
-            created_at__gte=week_ago
+            created_at__gte=start_of_day(week_ago)
         ).count()
         
         ads_generated = AdContent.objects.filter(
             campaign__user=user,
-            created_at__gte=week_ago
+            created_at__gte=start_of_day(week_ago)
         ).count()
         
         images_generated = ImageAsset.objects.filter(
             campaign__user=user,
-            created_at__gte=week_ago
+            created_at__gte=start_of_day(week_ago)
         ).count()
         
         active_campaigns = Campaign.objects.filter(
             user=user,
             is_active=True,
-            end_date__gte=datetime.now().date()
+            end_date__gte=today_date
         ).count()
         
-        # REAL ANALYTICS: Get weekly performance
+        # REAL WEEKLY ANALYTICS
         weekly_analytics = DailyAnalytics.objects.filter(
             campaign__user=user,
-            date__gte=week_ago
+            date__gte=week_ago,
+            date__lte=today_date
         ).aggregate(
             total_impressions=Sum('impressions'),
             total_clicks=Sum('clicks'),
@@ -2099,109 +2110,104 @@ class WeeklyReportView(APIView):
             total_spend=Sum('spend')
         )
         
-        total_engagement = weekly_analytics['total_clicks'] or 0
-        total_impressions = weekly_analytics['total_impressions'] or 0
-        total_spend = float(weekly_analytics['total_spend'] or 0)
-        
-        # Calculate growth (compare to previous week)
-        two_weeks_ago = week_ago - timedelta(days=7)
-        previous_week = DailyAnalytics.objects.filter(
+        # PREVIOUS WEEK FOR COMPARISON
+        two_weeks_ago = days_ago(14)
+        previous_week_analytics = DailyAnalytics.objects.filter(
             campaign__user=user,
             date__gte=two_weeks_ago,
             date__lt=week_ago
         ).aggregate(
-            prev_clicks=Sum('clicks')
+            prev_impressions=Sum('impressions'),
+            prev_clicks=Sum('clicks'),
+            prev_conversions=Sum('conversions'),
+            prev_spend=Sum('spend')
         )
         
-        prev_engagement = previous_week['prev_clicks'] or 1
-        engagement_growth = round(((total_engagement - prev_engagement) / prev_engagement) * 100, 1)
+        # Calculate metrics
+        total_impressions = weekly_analytics['total_impressions'] or 0
+        total_clicks = weekly_analytics['total_clicks'] or 0
+        total_conversions = weekly_analytics['total_conversions'] or 0
+        total_spend = float(weekly_analytics['total_spend'] or 0)
         
-        # REAL INSIGHTS: Calculate from actual data
+        prev_impressions = previous_week_analytics['prev_impressions'] or 1
+        prev_clicks = previous_week_analytics['prev_clicks'] or 1
+        prev_conversions = previous_week_analytics['prev_conversions'] or 1
+        
+        # Calculate growth rates
+        impression_growth = round(((total_impressions - prev_impressions) / prev_impressions) * 100, 1)
+        click_growth = round(((total_clicks - prev_clicks) / prev_clicks) * 100, 1)
+        conversion_growth = round(((total_conversions - prev_conversions) / prev_conversions) * 100, 1)
+        
+        # Calculate rates
+        avg_ctr = round((total_clicks / total_impressions * 100), 2) if total_impressions > 0 else 0
+        conversion_rate = round((total_conversions / total_clicks * 100), 2) if total_clicks > 0 else 0
+        
+        # Get top performing campaign
         top_campaign = Campaign.objects.filter(
             user=user,
             analytics_summary__isnull=False
-        ).order_by('-analytics_summary__total_clicks').first()
+        ).order_by('-analytics_summary__performance_score').first()
         
+        # Get worst performing campaign
+        worst_campaign = Campaign.objects.filter(
+            user=user,
+            analytics_summary__isnull=False
+        ).order_by('analytics_summary__performance_score').first()
+        
+        # REAL INSIGHTS from actual data
         insights = {
-            'top_performing_platform': top_campaign.platform if top_campaign else 'N/A',
+            'top_performing_platform': top_campaign.platform.title() if top_campaign else 'N/A',
+            'top_campaign_name': top_campaign.title if top_campaign else 'N/A',
+            'top_campaign_score': top_campaign.analytics_summary.performance_score if top_campaign else 0,
             'total_impressions': total_impressions,
-            'total_clicks': total_engagement,
+            'total_clicks': total_clicks,
+            'total_conversions': total_conversions,
             'total_spend': round(total_spend, 2),
-            'avg_ctr': round((total_engagement / total_impressions * 100), 2) if total_impressions > 0 else 0,
-            'engagement_trend': 'Increasing' if engagement_growth > 0 else 'Decreasing'
+            'avg_ctr': avg_ctr,
+            'conversion_rate': conversion_rate,
+            'impression_growth': f"{'+' if impression_growth > 0 else ''}{impression_growth}%",
+            'click_growth': f"{'+' if click_growth > 0 else ''}{click_growth}%",
+            'conversion_growth': f"{'+' if conversion_growth > 0 else ''}{conversion_growth}%",
+            'engagement_trend': 'Increasing' if click_growth > 0 else 'Decreasing',
+            'roas': round((total_conversions * 50 / total_spend), 2) if total_spend > 0 else 0
         }
         
-        # SMART RECOMMENDATIONS: Based on actual performance
-        recommendations = []
+        # Generate recommendations
+        recommendations = self._generate_weekly_recommendations(
+            avg_ctr=avg_ctr,
+            conversion_rate=conversion_rate,
+            click_growth=click_growth,
+            total_spend=total_spend,
+            active_campaigns=active_campaigns,
+            ads_generated=ads_generated,
+            top_campaign=top_campaign,
+            worst_campaign=worst_campaign,
+            insights=insights
+        )
         
-        # Performance-based recommendation
-        avg_ctr = insights['avg_ctr']
-        if avg_ctr < 2:
-            recommendations.append({
-                'category': 'Performance',
-                'priority': 'high',
-                'title': 'Improve Click-Through Rate',
-                'description': f'Your CTR is {avg_ctr}%. Industry average is 3-5%. Consider A/B testing different ad creatives.',
-                'action': 'Start A/B Test',
-                'impact': '+50% potential CTR increase'
-            })
-        elif avg_ctr > 5:
-            recommendations.append({
-                'category': 'Performance',
-                'priority': 'high',
-                'title': 'Excellent Performance - Scale Up',
-                'description': f'Your {avg_ctr}% CTR is above industry average. Consider increasing budget to maximize results.',
-                'action': 'Increase Budget',
-                'impact': '+100% potential reach'
-            })
-        
-        # Content recommendation
-        if ads_generated < 5:
-            recommendations.append({
-                'category': 'Content',
-                'priority': 'medium',
-                'title': 'Generate More Ad Variations',
-                'description': f'You created {ads_generated} ads this week. More variations improve A/B testing effectiveness.',
-                'action': 'Create 5 variations',
-                'impact': '+25% optimization potential'
-            })
-        
-        # Campaign recommendation
-        if active_campaigns == 0:
-            recommendations.append({
-                'category': 'Campaigns',
-                'priority': 'high',
-                'title': 'No Active Campaigns',
-                'description': 'You have no active campaigns running. Create a new campaign to start driving results.',
-                'action': 'Create Campaign',
-                'impact': 'Start generating ROI'
-            })
+        # Generate next steps
+        next_steps = self._generate_next_steps(
+            top_campaign=top_campaign,
+            worst_campaign=worst_campaign,
+            avg_ctr=avg_ctr,
+            ads_generated=ads_generated,
+            active_campaigns=active_campaigns
+        )
         
         return Response({
-            'period': 'Last 7 days',
+            'period': f'{week_ago.strftime("%b %d")} - {today_date.strftime("%b %d, %Y")}',
             'summary': {
                 'campaigns_created': campaigns_created,
                 'ads_generated': ads_generated,
                 'images_generated': images_generated,
                 'active_campaigns': active_campaigns,
-                'total_engagement': total_engagement,
-                'engagement_growth': f"{'+' if engagement_growth > 0 else ''}{engagement_growth}%"
+                'total_engagement': total_clicks,
+                'engagement_growth': insights['click_growth']
             },
             'insights': insights,
-            'recommendations': recommendations if recommendations else [{
-                'category': 'General',
-                'priority': 'low',
-                'title': 'Keep Up the Good Work',
-                'description': 'Your campaigns are performing well. Continue monitoring and optimizing.',
-                'action': 'View Analytics',
-                'impact': 'Maintain performance'
-            }],
-            'next_steps': [
-                f"Review top performing campaign: {top_campaign.title if top_campaign else 'N/A'}",
-                f"Analyze campaigns with CTR below {avg_ctr}%",
-                "Test new ad creatives with AI generator",
-                "Check budget allocation across platforms"
-            ]
+            'recommendations': recommendations,
+            'next_steps': next_steps,
+            'comparison_available': prev_clicks > 0
         })
 
 # ============================================================================

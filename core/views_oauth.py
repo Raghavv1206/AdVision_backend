@@ -9,6 +9,7 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 import requests
 import os
+from core.utils.timezone_utils import now
 
 User = get_user_model()
 

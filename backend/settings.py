@@ -181,16 +181,26 @@ SIMPLE_JWT = {
 }
 
 # ============================================================================
-# ALLAUTH CONFIGURATION
+# ALLAUTH CONFIGURATION - CLEAN (No Deprecation Warnings)
 # ============================================================================
 SITE_ID = 1
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+# Disable username completely
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
+# Modern login method (replaces deprecated ACCOUNT_AUTHENTICATION_METHOD)
+ACCOUNT_LOGIN_METHODS = {'email'}
+
+# Email verification
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+# Modern signup fields (replaces ACCOUNT_EMAIL_REQUIRED and ACCOUNT_USERNAME_REQUIRED)
+ACCOUNT_SIGNUP_FIELDS = ['email*']
+
+# Custom adapters
 ACCOUNT_ADAPTER = 'core.adapters.CustomAccountAdapter'
 
+# Social auth settings
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True

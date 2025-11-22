@@ -1,4 +1,4 @@
-# backend/core/serializers.py - COMPLETE CLEAN VERSION
+# backend/core/serializers.py - FIXED VERSION WITH PROPER SIGNUP FIELDS
 from rest_framework import serializers
 from .models import (
     User, Campaign, AdContent, ImageAsset, Comment,
@@ -10,9 +10,10 @@ from .models import (
     UserAPIKey
 )
 from dj_rest_auth.registration.serializers import RegisterSerializer
+from django.conf import settings
 
 # ============================================================================
-# USER & AUTH
+# USER & AUTH - FIXED TO REMOVE DEPRECATION WARNINGS
 # ============================================================================
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for basic user info."""
@@ -21,16 +22,28 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'role', 'bio']
 
 class CustomRegisterSerializer(RegisterSerializer):
-    """Custom registration serializer that doesn't use username."""
-    username = None
+    """
+    Custom registration serializer that properly handles email-only authentication.
+    This removes the deprecation warnings from dj-rest-auth.
+    """
+    username = None  # We don't use username
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Remove username field completely
+        if 'username' in self.fields:
+            del self.fields['username']
     
     def get_cleaned_data(self):
+        """Return cleaned data without username."""
         return {
             'email': self.validated_data.get('email', ''),
             'password1': self.validated_data.get('password1', ''),
         }
 
     def save(self, request):
+        """Save user with email as primary identifier."""
         from allauth.account.models import EmailAddress
         from django.contrib.auth import get_user_model
         
@@ -38,11 +51,13 @@ class CustomRegisterSerializer(RegisterSerializer):
         email = self.validated_data.get('email')
         password = self.validated_data.get('password1')
         
+        # Create user
         user = User.objects.create_user(
             email=email,
             password=password
         )
         
+        # Create verified email address
         EmailAddress.objects.create(
             user=user,
             email=email,
@@ -145,7 +160,6 @@ class CampaignSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         campaign = super().create(validated_data)
-        
         return campaign
 
 # ============================================================================
@@ -281,4 +295,4 @@ class UserAPIKeySerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'verification_status', 'last_verified', 
             'error_message', 'created_at', 'updated_at'
-        ]   
+        ]

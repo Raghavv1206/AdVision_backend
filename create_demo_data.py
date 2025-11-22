@@ -5,9 +5,10 @@
 
 import os
 import django
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 import random
+from django.utils import timezone
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
@@ -83,7 +84,7 @@ for key_data in api_keys_data:
             'developer_token': key_data.get('developer_token', ''),
             'verification_status': 'verified',
             'is_active': True,
-            'last_verified': datetime.now()
+            'last_verified': timezone.now()
         }
     )
     
@@ -158,7 +159,7 @@ campaigns_data = [
     }
 ]
 
-today = datetime.now().date()
+today = timezone.now().date()
 campaigns = []
 
 for camp_data in campaigns_data:
@@ -369,7 +370,7 @@ ab_test, created = ABTest.objects.get_or_create(
         'status': 'running',
         'success_metric': 'ctr',
         'min_sample_size': 1000,
-        'start_date': datetime.now() - timedelta(days=7)
+        'start_date': timezone.now() - timedelta(days=7)
     }
 )
 

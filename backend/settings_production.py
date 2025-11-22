@@ -1,17 +1,36 @@
 # backend/backend/settings_production.py
-from .settings import *
-import dj_database_url
 import os
+import dj_database_url
+
+# Import base settings FIRST
+from .settings import *
+
+# ============================================================================
+# CRITICAL: Override ALLAUTH settings (Must come right after import)
+# ============================================================================
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_LOGIN_METHODS = {'email'}  # Modern way instead of AUTHENTICATION_METHOD
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ['email*']  # Only email, no username
+
+# Make sure REST_AUTH uses the custom serializer
+REST_AUTH = {
+    'REGISTER_SERIALIZER': 'core.serializers.CustomRegisterSerializer',
+    'USE_JWT': True,
+    'JWT_AUTH_HTTPONLY': False,
+    'SESSION_LOGIN': False,
+    'LOGIN_SERIALIZER': 'dj_rest_auth.serializers.LoginSerializer',
+}
 
 # ============================================================================
 # PRODUCTION SECURITY
 # ============================================================================
 DEBUG = False
 
-# Add your domains here - UPDATE THESE with your actual domains
 ALLOWED_HOSTS = [
-    'advision-backend.onrender.com',  # Replace with your actual Render URL
-    '.onrender.com',                   # Allow all onrender.com subdomains
+    'advision-backend.onrender.com',
+    '.onrender.com',
     'localhost',
     '127.0.0.1',
 ]
@@ -45,7 +64,6 @@ DATABASES = {
 # ============================================================================
 # STATIC FILES (WhiteNoise)
 # ============================================================================
-# Insert WhiteNoise after SecurityMiddleware
 if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
@@ -53,23 +71,18 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Create staticfiles directory if it doesn't exist
 os.makedirs(STATIC_ROOT, exist_ok=True)
 
 # ============================================================================
-# CORS - Update with your Vercel frontend URL
+# CORS
 # ============================================================================
-# Get frontend URL from environment or use default
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://advision-frontend.vercel.app')
 
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = list(set([
     FRONTEND_URL,
-    "https://advision-frontend.vercel.app",  # Replace with your actual Vercel URL
+    "https://advision-frontend.vercel.app",
     "https://advision.vercel.app",
-]
-
-# Remove duplicates
-CORS_ALLOWED_ORIGINS = list(set(CORS_ALLOWED_ORIGINS))
+]))
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -85,15 +98,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = list(set([
     FRONTEND_URL,
     "https://advision-frontend.vercel.app",
     "https://advision.vercel.app",
-    "https://advision-backend.onrender.com",  # Replace with your actual Render URL
-]
-
-# Remove duplicates
-CSRF_TRUSTED_ORIGINS = list(set(CSRF_TRUSTED_ORIGINS))
+    "https://advision-backend.onrender.com",
+]))
 
 # ============================================================================
 # GOOGLE OAUTH SETTINGS
@@ -102,12 +112,12 @@ GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
 
 # ============================================================================
-# API ENCRYPTION KEY - Use environment variable in production
+# API ENCRYPTION KEY
 # ============================================================================
 API_ENCRYPTION_KEY = os.getenv('API_ENCRYPTION_KEY', SECRET_KEY)
 
 # ============================================================================
-# CLOUDINARY CONFIGURATION (Override for production if needed)
+# CLOUDINARY CONFIGURATION
 # ============================================================================
 import cloudinary
 
