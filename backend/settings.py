@@ -181,24 +181,17 @@ SIMPLE_JWT = {
 }
 
 # ============================================================================
-# ALLAUTH CONFIGURATION - FIXED FOR DJANGO-ALLAUTH 64.2.1
+# ALLAUTH CONFIGURATION - STABLE VERSION
 # ============================================================================
 SITE_ID = 1
 
-# CRITICAL: Do NOT define ACCOUNT_AUTHENTICATION_METHOD at all!
-# It's deprecated and conflicts with ACCOUNT_LOGIN_METHODS
-
-# Disable username completely
+# Email-only authentication (no username)
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # This version requires it
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
-
-# Use ONLY the modern setting (replaces deprecated ACCOUNT_AUTHENTICATION_METHOD)
-ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-
-# Modern signup fields
-ACCOUNT_SIGNUP_FIELDS = ['email*']
+ACCOUNT_UNIQUE_EMAIL = True
 
 # Custom adapters
 ACCOUNT_ADAPTER = 'core.adapters.CustomAccountAdapter'
